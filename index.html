@@ -580,6 +580,34 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
+  
+  <script>
+  // 🔌 CONNECT TO SUPABASE
+  const SUPABASE_URL = "https://dzkslsjyitlfpsjapunv.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_8H9EIugSXYA8o_xK3DEvMw_qAqNtVmJ
+";
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  // 🧠 WAIT FOR PAGE TO LOAD
+  document.addEventListener("DOMContentLoaded", () => {
+    const loginBtn = document.getElementById("loginBtn");
+
+    if (!loginBtn) {
+      alert("❌ loginBtn not found");
+      return;
+    }
+
+    loginBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      alert("✅ Login button clicked");
+    });
+  });
+</script>
+
 <body>
 <div id="toast" class="toast"></div>
 
