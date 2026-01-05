@@ -389,6 +389,23 @@
 
   /* Login */
   .loginCard{
+
+    <form id="loginForm" class="loginForm">
+  <input id="username" placeholder="Username" autocomplete="username" />
+  
+  <div class="pwRow">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+    <button type="button" id="togglePw" class="ghostBtn">Show</button>
+  </div>
+
+  <button id="loginBtn" type="submit" class="primaryBtn">Login</button>
+
+  <div class="helpText">
+    Forgot your login? Message the organiser.
+  </div>
+</form>
+
+    
     width:min(92vw, 420px);
     background:rgba(255,255,255,0.03);
     border:1px solid var(--border);
