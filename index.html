@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<form id="loginForm" class="loginForm">
+
   <input id="username" placeholder="Username" autocomplete="username" />
   
   <div class="pwRow">
@@ -27,10 +27,7 @@
   </div>
 </form>
 
-/* Hide the accidental duplicate/unstyled login */
-body > form#loginForm {
-  display: none !important;
-}
+
 
 <style>
 
@@ -42,6 +39,14 @@ body > form#loginForm {
   height: auto;
 }
 
+  #auth {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+  
   :root{
     --bg:#0a0a0f;
     --panel:#0f0f14;
