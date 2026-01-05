@@ -1,0 +1,2056 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rattler Run 5K</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+
+.loginLogo {
+  display: block;
+  margin: 0 auto 16px auto;
+  max-width: 160px;
+  width: 100%;
+  height: auto;
+}
+
+  :root{
+    --bg:#0a0a0f;
+    --panel:#0f0f14;
+    --panel2:#101016;
+    --border:#26262a;
+    --text:#ffffff;
+    --muted:rgba(255,255,255,.72);
+    --accent:#e11d48;
+    --danger:#7f1d1d;
+    --secondary:#27272a;
+    --green:#22c55e;
+  }
+
+  *{ box-sizing:border-box; }
+  body { margin:0; font-family:Inter, Arial, sans-serif; background:var(--bg); color:var(--text); }
+  section { width:100%; min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:16px 0; }
+
+  button { padding:14px 18px; font-size:16px; background:var(--accent); color:white; border:none; border-radius:14px; cursor:pointer; font-weight:900; }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+  input { padding:12px; font-size:16px; border-radius:14px; border:1px solid #333; background:var(--panel); color:var(--text); width:100%; }
+
+  .panel { padding:12px; width:92vw; max-width:900px; }
+  .leaflet-div-icon { background:transparent !important; border:none !important; }
+
+  .pill{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:7px 10px; border-radius:999px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.03);
+    font-size:12px; font-weight:800; white-space:nowrap;
+  }
+  .pillBtn{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  /* Map */
+  #mapWrap{
+    width:92vw;
+    max-width:900px;
+    margin-top:10px;
+    position:relative;
+  }
+  #map {
+    height:56vh;
+    width:100%;
+    border:2px solid var(--accent);
+    border-radius:18px;
+    overflow:hidden;
+    background:#0b0b10;
+  }
+  /* Helps page scroll when map is locked */
+  #map.map-locked{ touch-action: pan-y !important; }
+  #map.map-unlocked{ touch-action: none !important; }
+
+  .mapLoading{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(10,10,15,.88);
+    border-radius:18px;
+    z-index:999;
+    padding:14px;
+  }
+  .mapLoadingCard{
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+    padding:12px 14px;
+    border-radius:14px;
+    font-size:13px;
+    color:var(--muted);
+    width:min(84vw, 420px);
+    text-align:center;
+  }
+
+  .mapControls{
+    position:absolute;
+    right:10px;
+    bottom:10px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    z-index:1000;
+  }
+  .mapCtrlBtn{
+    background:rgba(15,15,20,0.9);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:14px;
+    font-size:13px;
+    font-weight:900;
+    cursor:pointer;
+    backdrop-filter: blur(6px);
+  }
+
+  /* Header */
+  .topBar{
+    width:92vw; max-width:900px;
+    margin-top:4px;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .topTitle{ font-size:28px; font-weight:900; letter-spacing:.2px; line-height:1.05; }
+  .topSub{ font-size:13px; color:var(--muted); letter-spacing:.2px; }
+
+  .whoRow{
+    width:92vw; max-width:900px;
+    margin-top:10px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .helloLine{
+    margin-top:8px;
+    width:92vw; max-width:900px;
+    font-size:16px; font-weight:800; opacity:.95;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .helloPill{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 12px; border-radius:999px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+  }
+
+  /* Progress card */
+  .progressCard{
+    width:92vw; max-width:900px;
+    margin-top:12px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:12px 14px;
+    text-align:left;
+  }
+  .progressTop{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; flex-wrap:wrap;
+  }
+  .progressLabel{ font-size:13px; color:var(--muted); font-weight:700; }
+  .progressValue{ font-size:16px; font-weight:900; letter-spacing:.2px; }
+
+  .bar{
+    width:100%; height:10px; border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--border);
+    overflow:hidden; margin-top:10px;
+  }
+  .barFill{
+    height:100%; width:0%;
+    background:var(--green);
+    border-radius:999px;
+    transition:width .35s ease;
+  }
+  .subRow{
+    margin-top:10px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; flex-wrap:wrap;
+  }
+  .savedPill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px;
+    border:1px solid var(--border);
+    background:var(--panel2);
+    font-size:12px;
+    opacity:0;
+    transform:translateY(-2px);
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .savedPill.show{ opacity:1; transform:translateY(0px); }
+  .completePill{
+    display:none;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:#0f2a12;
+    font-size:12px; font-weight:900;
+  }
+  .lastUpdate{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:700;
+  }
+  .nextMoment{
+    margin-top:10px;
+    font-size:13px;
+    color:var(--muted);
+    font-weight:800;
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed; left:50%; transform:translateX(-50%);
+    bottom:18px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    padding:10px 12px;
+    border-radius:14px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease;
+    z-index:99999;
+    width:min(88vw, 520px);
+    text-align:center;
+    font-size:14px;
+  }
+  .toast.show{ opacity:1; }
+
+  /* Controls */
+  .controlsCard{
+    width:92vw;
+    max-width:900px;
+    margin-top:12px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:12px 14px;
+  }
+  .btnRow{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:nowrap;
+  }
+  .quickBtn{
+    padding:12px 10px;
+    border-radius:16px;
+    font-size:16px;
+    font-weight:900;
+    margin:0;
+    flex:1 1 0;
+    min-width:0;
+    max-width:220px;
+    white-space:nowrap;
+  }
+  .inputRow{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    align-items:center;
+    margin-top:10px;
+    flex-wrap:nowrap;
+  }
+  .kmInput{
+    width:240px;
+    max-width:48vw;
+    margin:0;
+  }
+  .addBtn{
+    padding:12px 16px;
+    margin:0;
+    border-radius:16px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+  .bottomRow{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    margin-top:10px;
+    flex-wrap:nowrap;
+  }
+  .ghostBtn{
+    background:var(--secondary);
+    margin:0;
+    padding:12px 14px;
+    border-radius:16px;
+    font-weight:900;
+    flex:1 1 0;
+    color:var(--text);
+  }
+
+  @media (max-width:380px){
+    .quickBtn{ font-size:15px; padding:12px 8px; }
+    .kmInput{ width:200px; }
+  }
+
+  /* Overlays */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.86);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+    padding:16px;
+  }
+  .card{
+    width:min(92vw, 720px);
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:16px;
+    box-shadow:0 18px 60px rgba(0,0,0,0.55);
+    text-align:left;
+  }
+
+  /* Finish */
+  .finishHeaderRow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .finishConfetti{
+    font-size:22px;
+    opacity:.95;
+    text-align:center;
+    letter-spacing:2px;
+    animation: pop 1200ms ease-in-out infinite alternate;
+  }
+  @keyframes pop{
+    from{ transform:translateY(0px); opacity:.9; }
+    to{ transform:translateY(-3px); opacity:1; }
+  }
+  .finishTitle{
+    font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+    font-size:44px;
+    letter-spacing:1px;
+    margin:4px 0 2px;
+    text-align:center;
+  }
+  .finishSub{
+    margin:0;
+    opacity:.92;
+    text-align:center;
+    font-size:15px;
+    line-height:1.4;
+  }
+  .finishMeta{
+    margin-top:10px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .finishHint{
+    margin:12px 0 0;
+    text-align:center;
+    font-size:13px;
+    opacity:.75;
+  }
+  .finishButtons{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
+  .primaryBtn{ background:var(--accent); flex:1 1 220px; }
+  .secondaryBtn{ background:var(--secondary); flex:1 1 160px; }
+
+  /* Login */
+  .loginCard{
+    width:min(92vw, 420px);
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:18px 16px;
+    box-shadow:0 18px 60px rgba(0,0,0,0.55);
+    text-align:left;
+  }
+  .loginTitle{ font-size:26px; font-weight:900; margin:0; text-align:center; }
+  .loginSub{ margin:8px 0 14px; opacity:.85; font-size:13px; text-align:center; }
+  .fieldWrap{ position:relative; width:100%; }
+  .pwToggle{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    background:transparent; border:1px solid var(--border);
+    color:var(--text); padding:6px 10px; border-radius:10px;
+    font-size:12px; cursor:pointer; opacity:.9;
+  }
+  .warnLine{ margin-top:6px; opacity:.9; font-size:12px; text-align:center; }
+  .warnLine b{ color:#ffd1d1; }
+  .helpLine{ margin-top:10px; opacity:.75; font-size:12px; text-align:center; }
+
+  /* Splash */
+  .splashWrap{
+    width:min(92vw, 520px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+  }
+  .brandStack{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    align-items:center;
+    margin-bottom:4px;
+  }
+  .brandTitle{ font-size:28px; font-weight:900; letter-spacing:.4px; }
+  .brandTag{ font-size:14px; opacity:.85; }
+  .brandSite{ font-size:12px; opacity:.8; letter-spacing:1px; }
+
+  .welcomeLine{
+    font-size:40px;
+    font-weight:900;
+    margin-top:6px;
+    line-height:1.05;
+  }
+  .nextLine{ font-size:13px; opacity:.8; margin-top:2px; }
+  .progressLine{ margin-top:2px; font-size:16px; font-weight:900; opacity:.92; }
+  .splashBtn{
+    width:min(320px, 78vw);
+    padding:16px 18px;
+    font-size:18px;
+    border-radius:16px;
+    margin-top:4px;
+  }
+
+  /* Admin */
+  .adminHeader{
+    width:92vw; max-width:900px;
+    margin:14px 0 6px;
+    display:flex; flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  .adminTitle{ font-size:28px; font-weight:900; }
+  .adminSub{ font-size:12px; opacity:0.75; text-align:center; }
+  .adminTopRow{
+    width:92vw; max-width:900px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    margin-top:10px;
+  }
+  .chipRow{
+    width:92vw; max-width:900px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-top:10px;
+  }
+  .chip{
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.03);
+    font-size:12px;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .chip.active{
+    border-color:rgba(225,29,72,.8);
+    box-shadow:0 0 0 2px rgba(225,29,72,.12) inset;
+  }
+  .adminCard{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:12px;
+    text-align:left;
+    margin-bottom:10px;
+  }
+  .adminCardTop{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .adminUser{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:16px;
+  }
+  .adminKm{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:18px;
+    font-weight:900;
+  }
+  .adminMeta{
+    margin-top:8px;
+    opacity:0.9;
+    font-size:13px;
+    line-height:1.35;
+  }
+  .adminActions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+  }
+  .adminActions button{ margin:0; }
+  .statusPill{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    font-size:12px;
+    font-weight:900;
+  }
+  .statusDone{ background:#0f2a12; }
+  .statusProg{ background:#2a240f; }
+  .statusNone{ background:#2a0f0f; }
+  .miniBar{
+    width:100%;
+    height:10px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--border);
+    overflow:hidden;
+    margin-top:8px;
+  }
+  .miniFill{ height:100%; width:0%; background:var(--green); }
+  .moreMenu{
+    display:none;
+    margin-top:8px;
+    padding:10px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:rgba(255,255,255,0.02);
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .moreMenu.show{ display:flex; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  .scrollBox{
+    max-height:45vh;
+    overflow:auto;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px;
+    background:rgba(255,255,255,0.02);
+    white-space:pre-wrap;
+  }
+
+  /* ===== Subtle pulsing progress dot (NO SCALE = NO WOBBLE) ===== */
+  .pulse-dot{
+    filter: drop-shadow(0 0 4px rgba(34,197,94,.28));
+  }
+  .pulse-dot.leaflet-interactive{
+    animation: pulseDot 1.35s ease-in-out infinite;
+  }
+  @keyframes pulseDot{
+    0%   { stroke-opacity: .85; fill-opacity: .85; filter: drop-shadow(0 0 3px rgba(34,197,94,.22)); }
+    55%  { stroke-opacity: 1;   fill-opacity: 1;   filter: drop-shadow(0 0 7px rgba(34,197,94,.40)); }
+    100% { stroke-opacity: .85; fill-opacity: .85; filter: drop-shadow(0 0 3px rgba(34,197,94,.22)); }
+  }
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+<div id="toast" class="toast"></div>
+
+<!-- LOGIN -->
+
+<section id="auth">
+  <div class="loginCard">
+  <img src="logo.png" class="loginLogo">
+    <h1 class="loginTitle">Rattler Run 5K</h1>
+    <div class="loginSub">Log in to track your Rattler Run 5K progress.</div>
+
+    <div class="fieldWrap">
+      <input id="username" placeholder="Username" autocomplete="username" />
+    </div>
+
+    <div class="fieldWrap" style="margin-top:6px;">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+      <button class="pwToggle" type="button" onclick="togglePassword()">Show</button>
+    </div>
+
+    <div class="warnLine">⚠️ <b>Case sensitive</b> usernames and passwords.</div>
+
+    <button id="loginBtn" onclick="login()" style="width:100%; margin-top:12px;">Login</button>
+
+    <div class="helpLine">Forgot your login? Message the organiser.</div>
+  </div>
+</section>
+
+<!-- SPLASH -->
+<section id="splash" style="display:none">
+  <div class="splashWrap">
+    <div class="brandStack">
+      <div class="brandTitle">Rattler Run 5K</div>
+      <div class="brandTag">walk, run, wrestle</div>
+      <div class="brandSite">WRW.COM</div>
+    </div>
+
+    <div class="whoRow" style="justify-content:center;">
+      <span class="pill">✅ Logged in: <span id="whoSplash" class="mono"></span></span>
+      <button class="pillBtn" onclick="logoutConfirm()">Log out</button>
+      <button id="exitDemoBtnSplash" class="pillBtn" onclick="exitDemo()" style="display:none;">Exit demo</button>
+    </div>
+
+    <div class="welcomeLine">Welcome <span id="userName"></span></div>
+    <div id="splashProgress" class="progressLine">Progress: 0.00 / 5.00 km</div>
+    <div class="nextLine">Tap Continue to open the map and log your distance.</div>
+
+    <button id="startBtn" class="splashBtn" onclick="startRun()">Continue</button>
+  </div>
+</section>
+
+<!-- ADMIN -->
+<section id="admin" style="display:none; justify-content:flex-start; width:100%;">
+  <div style="width:100%;background:var(--bg);padding:14px 0;border-bottom:1px solid #222;">
+    <div class="adminHeader" style="margin:0;">
+      <div class="adminTitle">Rattler Run 5K — Admin</div>
+      <div class="adminSub">Most recent update first • Demo mode won’t affect real users.</div>
+
+      <div id="adminSummary" class="adminTopRow"></div>
+
+      <div class="panel" style="padding-top:8px;">
+        <input id="adminSearch" placeholder="Search user…" oninput="refreshAdmin()" style="max-width:420px;">
+        <div class="chipRow" style="margin-top:10px;">
+          <button class="chip active" id="chipAll" onclick="setAdminFilter('all')">All</button>
+          <button class="chip" id="chipNone" onclick="setAdminFilter('none')">Not started</button>
+          <button class="chip" id="chipProg" onclick="setAdminFilter('prog')">In progress</button>
+          <button class="chip" id="chipDone" onclick="setAdminFilter('done')">Finished</button>
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+          <button class="ghostBtn" onclick="refreshAdmin()">Refresh</button>
+          <button class="ghostBtn" onclick="exportSummary()">Export summary</button>
+          <button class="ghostBtn" onclick="enterDemo()">Demo mode</button>
+          <button class="ghostBtn" onclick="resetDemo()">Reset demo</button>
+          <button class="ghostBtn" onclick="logoutConfirm()">Logout</button>
+          <button class="ghostBtn" style="background:var(--danger);" onclick="openResetAll()">Reset ALL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="padding-top:14px;">
+    <div id="adminCards"></div>
+  </div>
+</section>
+
+<!-- RUN -->
+<section id="run" style="display:none; justify-content:flex-start;">
+  <div class="topBar">
+    <div class="topTitle">Rattler Run 5K</div>
+    <div class="topSub">walk, run, wrestle • WRW.COM</div>
+  </div>
+
+  <div class="whoRow">
+    <span class="pill">✅ Logged in: <span id="whoRun" class="mono"></span></span>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="pillBtn" onclick="openHelp()">?</button>
+      <button id="exitDemoBtnRun" class="pillBtn" onclick="exitDemo()" style="display:none;">Exit demo</button>
+      <button class="pillBtn" onclick="logoutConfirm()">Log out</button>
+    </div>
+  </div>
+
+  <div class="helloLine">
+    <div class="helloPill">👋 <span id="helloName">Hello</span></div>
+  </div>
+
+  <div class="progressCard">
+    <div class="progressTop">
+      <div class="progressLabel">Progress</div>
+      <div class="progressValue"><span id="total">0.00</span> / 5.00 km</div>
+    </div>
+    <div class="bar"><div id="barFill" class="barFill"></div></div>
+
+    <div class="subRow">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <span id="completePill" class="completePill">✅ Completed</span>
+        <span id="savedPill" class="savedPill">✅ Saved</span>
+      </div>
+      <div class="lastUpdate">Last update: <span id="lastUpdateText">—</span></div>
+    </div>
+
+    <div class="nextMoment" id="nextMomentText">Next Stone Cold moment in: —</div>
+  </div>
+
+  <div id="mapWrap">
+    <div id="map" class="map-locked"></div>
+
+    <div class="mapControls">
+      <button class="mapCtrlBtn" id="mapLockBtn" onclick="toggleMapLock()">Unlock map</button>
+      <button class="mapCtrlBtn" onclick="fitRoute()">Fit route</button>
+      <button class="mapCtrlBtn" onclick="recenter()">Recenter</button>
+    </div>
+
+    <div id="mapLoading" class="mapLoading">
+      <div class="mapLoadingCard">
+        Loading map… if this takes ages, zoom once (+) and it usually wakes up.
+      </div>
+    </div>
+  </div>
+
+  <div class="controlsCard">
+    <div class="btnRow">
+      <button class="quickBtn" onclick="requestLog(0.5)">+0.5 km</button>
+      <button class="quickBtn" onclick="requestLog(1)">+1 km</button>
+      <button class="quickBtn" onclick="requestLog(2)">+2 km</button>
+    </div>
+
+    <div class="inputRow">
+      <input id="input" class="kmInput" type="text" inputmode="decimal" placeholder="Type km (e.g. 1.5)">
+      <button class="addBtn" onclick="requestLogFromInput()">Add</button>
+    </div>
+
+    <div class="bottomRow">
+      <button id="undoBtn" class="ghostBtn" onclick="undoLast()" disabled>Undo</button>
+      <button class="ghostBtn" onclick="emailToWRW()">Send proof</button>
+    </div>
+
+    <div style="margin-top:10px; display:flex; justify-content:center;">
+      <button class="pillBtn" onclick="backToTop()">Back to top ↑</button>
+    </div>
+  </div>
+
+  <div style="height:24px;"></div>
+</section>
+
+<!-- FINISH -->
+<div class="overlay" id="finishOverlay" role="dialog" aria-modal="true">
+  <div class="card">
+    <div class="finishHeaderRow"><div class="finishConfetti">🎉 🎊</div></div>
+    <div class="finishTitle">WELL DONE!</div>
+
+    <p class="finishSub">
+      <b id="finishUser">You</b> completed <b>Rattler Run 5K</b>
+    </p>
+
+    <div class="finishMeta">
+      <span class="pill">🏁 Total: <b id="finishTotal">5.00</b> km</span>
+      <span class="pill">🕒 Completed: <b id="finishWhen">—</b></span>
+    </div>
+
+    <p class="finishHint">
+      Tap <b>Send proof</b> — please attach <b>screenshots and/or proof</b> before sending.
+    </p>
+
+    <div class="finishButtons">
+      <button class="primaryBtn" onclick="emailToWRW()">Send proof</button>
+      <button class="secondaryBtn" onclick="closeFinish()">Back to map</button>
+    </div>
+  </div>
+</div>
+
+<!-- HELP -->
+<div class="overlay" id="helpOverlay">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <div style="font-weight:900; font-size:18px;">Quick help</div>
+      <button class="ghostBtn" onclick="closeHelp()">Close</button>
+    </div>
+
+    <ul style="margin:10px 0 0; padding-left:18px; color:var(--muted); font-size:13px; line-height:1.45;">
+      <li>Use the <b>+0.5 / +1 / +2</b> buttons or type your km and tap <b>Add</b>.</li>
+      <li>Your progress <b>auto-saves on this device</b>.</li>
+      <li><b>Send proof</b> opens an email draft — please attach <b>screenshots and/or proof</b> before sending.</li>
+      <li><b>Map is locked by default</b> so the page scrolls. Tap <b>Unlock map</b> to move/zoom it.</li>
+      <li>Use <b>Fit route</b> / <b>Recenter</b> if the map moves around.</li>
+    </ul>
+
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+      <button class="ghostBtn" onclick="fitRoute(); closeHelp();">Fit route</button>
+      <button class="ghostBtn" onclick="recenter(); closeHelp();">Recenter</button>
+      <button class="ghostBtn" onclick="toggleMapLock();">Toggle lock</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN: PASSWORD POPUP -->
+<div class="overlay" id="pwOverlay">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <div style="font-weight:900; font-size:18px;">User login</div>
+      <button class="ghostBtn" onclick="closePw()">Close</button>
+    </div>
+    <div style="margin-top:12px; line-height:1.7;">
+      <div><b>Username:</b> <span id="pwUser" class="mono"></span></div>
+      <div><b>Password:</b> <span id="pwPass" class="mono"></span></div>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button onclick="copyPw()">Copy both</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN: DETAILS POPUP -->
+<div class="overlay" id="detailsOverlay">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <div style="font-weight:900; font-size:18px;">Details</div>
+      <button class="ghostBtn" onclick="closeDetails()">Close</button>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <span class="pill">User: <span id="detailsUser" class="mono"></span></span>
+      <span class="pill">Total: <span id="detailsTotal" class="mono"></span> km</span>
+      <span class="pill">Last update: <span id="detailsUpdated" class="mono"></span></span>
+    </div>
+
+    <hr style="border:0;border-top:1px solid #222;margin:14px 0;">
+
+    <div style="display:grid; gap:12px;">
+      <div>
+        <div style="font-weight:900; margin-bottom:6px;">Logs</div>
+        <div id="detailsLogs" class="scrollBox mono"></div>
+      </div>
+      <div>
+        <div style="font-weight:900; margin-bottom:6px;">Emails</div>
+        <div id="detailsEmails" class="scrollBox mono"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button onclick="copyDetails()">Copy details</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN: RESET ALL CONFIRM -->
+<div class="overlay" id="resetAllOverlay">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <div style="font-weight:900; font-size:18px;">Reset ALL users</div>
+      <button class="ghostBtn" onclick="closeResetAll()">Close</button>
+    </div>
+    <p style="color:var(--muted); font-size:13px; line-height:1.4; margin:10px 0 0;">
+      This clears <b>km</b>, <b>logs</b>, and <b>emails</b> for <b>everyone</b> (Demo is kept).
+    </p>
+
+    <div style="margin-top:10px;">
+      <div style="font-size:13px; font-weight:900; margin-bottom:6px;">Type <span class="mono">RESET</span> to confirm:</div>
+      <input id="resetAllInput" placeholder="RESET" />
+    </div>
+
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+      <button class="ghostBtn" onclick="closeResetAll()">Cancel</button>
+      <button style="background:var(--danger);" onclick="confirmResetAll()">Reset ALL now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   SUPABASE BACKEND SETUP
+   =========================
+   1) Create a Supabase project
+   2) Create table: user_data (user_id uuid primary key, data jsonb, updated_at timestamptz)
+   3) Create Auth users for your runners + admin
+   4) Paste your URL + ANON KEY below
+*/
+const SUPABASE_URL = "__SUPABASE_URL__";
+const SUPABASE_ANON_KEY = "__SUPABASE_ANON_KEY__";
+const supabase = (SUPABASE_URL && SUPABASE_URL !== "__SUPABASE_URL__" && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+function toEmail(username){
+  const u = String(username || "").trim();
+  if (!u) return "";
+  // Keep your UI "Username" field. Behind the scenes we log in with an email.
+  // If you type an email, we use it directly. If not, we append a private domain.
+  return u.includes("@") ? u : `${u}@rattlerrun.local`;
+}
+
+let REMOTE_DATA = null;
+
+async function loadRemoteData(){
+  try{
+    if (!supabase) return null;
+    const { data: auth } = await supabase.auth.getUser();
+    const user = auth?.user;
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from("user_data")
+      .select("data")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    REMOTE_DATA = (data && data.data) ? data.data : {};
+    // Keep a local backup so the app still works offline
+    localStorage.setItem("users", JSON.stringify(REMOTE_DATA));
+    return REMOTE_DATA;
+  }catch(e){
+    console.warn("loadRemoteData failed:", e);
+    return null;
+  }
+}
+
+async function saveRemoteData(payload){
+  try{
+    if (!supabase) return;
+    const { data: auth } = await supabase.auth.getUser();
+    const user = auth?.user;
+    if (!user) return;
+
+    await supabase
+      .from("user_data")
+      .upsert({ user_id: user.id, data: payload, updated_at: new Date().toISOString() });
+
+  }catch(e){
+    console.warn("saveRemoteData failed:", e);
+  }
+}
+
+
+/* USERS */
+const USERS = {
+  "Becca":"1402",
+  "Az":"1212",
+  "Liam":"2706",
+  "testing":"123",
+  "user1":"123"
+};
+const ADMIN_USER = "Admin";
+const ADMIN_PASS = "Weston1961";
+const WRW_EMAIL = "log@walkrunwrestle.com";
+
+/* Run rules */
+const CHALLENGE_KM = 5;
+const MAP_ROUTE_KM = 25;               // hidden
+const TARGET_ROUTE_METERS = MAP_ROUTE_KM * 1000;
+const POPUP_DELAY_MS = 5000;
+
+const refs = [
+  "1km: And that's the bottom line, 'cause Stone Cold said so!",
+  "2km: Opening up a can of whoop-ass!",
+  "3km: Austin 3:16 kicks in!",
+  "4km: Stunner time!",
+  "5km: Stone Cold has finished the challenge!"
+];
+
+function getData(){
+  if (REMOTE_DATA) return REMOTE_DATA;
+  return JSON.parse(localStorage.getItem("users") || "{}");
+}"); }
+function saveData(d){
+  REMOTE_DATA = d;
+  localStorage.setItem("users", JSON.stringify(d));
+  // Fire-and-forget remote save (does not block UI)
+  saveRemoteData(d);
+}
+function getUser(){ return sessionStorage.getItem("user"); }
+function getRole(){ return sessionStorage.getItem("role"); }
+function escapeHtml(s){ return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+function jsSafe(s){ return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'"); }
+function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+
+/* Keep ONLY configured users; keep Demo only if it exists */
+(function setupUsersHardReset(){
+  const existing = getData();
+  const cleaned = {};
+
+  for (const u in USERS){
+    const prev = existing[u] || {};
+    cleaned[u] = {
+      pass: USERS[u],
+      km: (typeof prev.km === "number") ? prev.km : 0,
+      history: Array.isArray(prev.history) ? prev.history : [],
+      emails: Array.isArray(prev.emails) ? prev.emails : [],
+      last_update: (typeof prev.last_update === "string") ? prev.last_update : null,
+      finish_at: (typeof prev.finish_at === "string") ? prev.finish_at : null
+    };
+    if ((cleaned[u].km || 0) >= CHALLENGE_KM && !cleaned[u].finish_at){
+      const h = cleaned[u].history;
+      cleaned[u].finish_at = h.length ? h[h.length-1].atISO : new Date().toISOString();
+    }
+    if (!cleaned[u].last_update){
+      if (cleaned[u].history.length) cleaned[u].last_update = cleaned[u].history.at(-1).atISO;
+      else if (cleaned[u].emails.length) cleaned[u].last_update = cleaned[u].emails.at(-1).atISO;
+    }
+  }
+
+  if (existing.Demo && existing.Demo.is_demo === true){
+    cleaned.Demo = existing.Demo;
+  }
+
+  saveData(cleaned);
+})();
+
+/* Demo helpers */
+function ensureDemoExists(){
+  const data = getData();
+  if (!data.Demo){
+    data.Demo = {
+      pass: "demo",
+      is_demo: true,
+      km: 0,
+      history: [],
+      emails: [],
+      last_update: new Date().toISOString(),
+      finish_at: null
+    };
+    saveData(data);
+  } else {
+    data.Demo.is_demo = true;
+    saveData(data);
+  }
+}
+function enterDemo(){
+  ensureDemoExists();
+  teardownMap();
+  sessionStorage.setItem("role","demo");
+  sessionStorage.setItem("user","Demo");
+  sessionStorage.setItem("admin_authed","1");
+
+  showOnly("splash");
+  const u = "Demo";
+  document.getElementById("userName").textContent = u;
+  document.getElementById("whoSplash").textContent = u;
+  document.getElementById("exitDemoBtnSplash").style.display = "inline-flex";
+  document.getElementById("exitDemoBtnRun").style.display = "inline-flex";
+
+  const saved = Math.min((getData()[u].km || 0), CHALLENGE_KM);
+  document.getElementById("splashProgress").textContent = `Progress: ${saved.toFixed(2)} / 5.00 km`;
+  document.getElementById("startBtn").textContent = saved > 0 ? "Continue" : "Start";
+  showToast("Demo mode ✅ (only affects this device)", 1600);
+}
+function resetDemo(){
+  const data = getData();
+  if (!data.Demo || data.Demo.is_demo !== true){
+    alert("Demo doesn't exist yet. Tap Demo mode first.");
+    return;
+  }
+  data.Demo.km = 0;
+  data.Demo.history = [];
+  data.Demo.emails = [];
+  data.Demo.finish_at = null;
+  data.Demo.last_update = new Date().toISOString();
+  saveData(data);
+  showToast("Demo reset ✅", 1400);
+  refreshAdmin();
+}
+function exitDemo(){
+  teardownMap();
+  sessionStorage.setItem("role","admin");
+  sessionStorage.removeItem("user");
+  showOnly("admin");
+  refreshAdmin();
+}
+
+/* Show only one section */
+function showOnly(id){
+  const ids = ["auth","splash","run","admin"];
+  ids.forEach(x => {
+    const el = document.getElementById(x);
+    if (el) el.style.display = (x === id) ? "flex" : "none";
+  });
+}
+
+/* Logout confirm */
+function logoutConfirm(){
+  if (confirm("Log out?")) logout();
+}
+function logout(){  try{ if (supabase) supabase.auth.signOut(); }catch(e){}
+
+  teardownMap();
+  sessionStorage.removeItem("role");
+  sessionStorage.removeItem("user");
+  sessionStorage.removeItem("admin_authed");
+  location.reload();
+}
+
+/* Time helpers */
+function displayTime(iso){
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleString(); } catch(e){ return "—"; }
+}
+function timeAgo(iso){
+  if (!iso) return "—";
+  const t = new Date(iso).getTime();
+  if (!isFinite(t)) return "—";
+  const diff = Date.now() - t;
+  const s = Math.floor(diff/1000);
+  if (s < 10) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s/60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m/60);
+  if (h < 48) return `${h}h ago`;
+  const d = Math.floor(h/24);
+  return `${d}d ago`;
+}
+
+/* Toast */
+let toastTimer = null;
+function showToast(msg, ms=1200){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("show"), ms);
+}
+
+/* Saved indicator */
+let savedTimer = null;
+function flashSaved(){
+  const el = document.getElementById("savedPill");
+  if (!el) return;
+  el.classList.add("show");
+  clearTimeout(savedTimer);
+  savedTimer = setTimeout(()=>el.classList.remove("show"), 900);
+}
+
+/* Completion pill */
+function setCompletedUI(isDone){
+  const pill = document.getElementById("completePill");
+  if (!pill) return;
+  pill.style.display = isDone ? "inline-flex" : "none";
+}
+
+/* Next moment text */
+function updateNextMoment(loggedKm){
+  const el = document.getElementById("nextMomentText");
+  if (!el) return;
+
+  const km = clamp(Number(loggedKm||0), 0, CHALLENGE_KM);
+  if (km >= CHALLENGE_KM){
+    el.textContent = "Next Stone Cold moment in: Completed 🏁";
+    return;
+  }
+  const nextInt = Math.min(CHALLENGE_KM, Math.floor(km) + 1);
+  const remaining = Math.max(0, nextInt - km);
+  el.textContent = `Next Stone Cold moment in: ${remaining.toFixed(2)} km`;
+}
+
+/* Progress UI */
+function setProgressUI(km){
+  const clamped = Math.max(0, Math.min(CHALLENGE_KM, Number(km||0)));
+  document.getElementById("total").textContent = clamped.toFixed(2);
+  const pct = (clamped / CHALLENGE_KM) * 100;
+  document.getElementById("barFill").style.width = pct.toFixed(1) + "%";
+  setCompletedUI(clamped >= CHALLENGE_KM);
+  updateUndoButtonState();
+  updateNextMoment(clamped);
+}
+function updateLastUpdateLabel(){
+  const u = getUser();
+  const data = getData();
+  const iso = data?.[u]?.last_update || null;
+  document.getElementById("lastUpdateText").textContent = iso ? displayTime(iso) : "—";
+}
+function updateUndoButtonState(){
+  const u = getUser();
+  const data = getData();
+  const hist = data?.[u]?.history;
+  const has = Array.isArray(hist) && hist.length > 0;
+  const btn = document.getElementById("undoBtn");
+  if (btn) btn.disabled = !has;
+}
+
+/* show/hide password */
+function togglePassword(){
+  const pw = document.getElementById("password");
+  const btn = document.querySelector(".pwToggle");
+  const showing = pw.type === "text";
+  pw.type = showing ? "password" : "text";
+  btn.textContent = showing ? "Show" : "Hide";
+  pw.focus();
+}
+
+/* enable login button only when filled */
+function updateLoginButton(){
+  const u = (document.getElementById("username")?.value || "").trim();
+  const p = (document.getElementById("password")?.value || "");
+  const btn = document.getElementById("loginBtn");
+  if (!btn) return;
+  const ready = (u.length && p.length);
+  // Some mobile editors/WebViews don't reliably re-enable disabled buttons.
+  // So we NEVER hard-disable; we just change opacity to hint.
+  btn.disabled = false;
+  btn.style.opacity = ready ? "1" : "0.65";
+}
+document.addEventListener("DOMContentLoaded", function(){
+  const u = document.getElementById("username");
+  const p = document.getElementById("password");
+  // If this file is viewed inside an editor preview that doesn't fire input events reliably,
+  // the Login button is still clickable (we removed the disabled attribute in HTML).
+  u && u.addEventListener("input", updateLoginButton);
+  p && p.addEventListener("input", updateLoginButton);
+  u && u.addEventListener("keydown", (e)=>{ if (e.key==="Enter"){ e.preventDefault(); p && p.focus(); }});
+  p && p.addEventListener("keydown", (e)=>{ if (e.key==="Enter"){ e.preventDefault(); login(); }});
+  updateLoginButton();
+});;
+
+/* LOGIN */
+function login(){
+  const u = (document.getElementById("username")?.value || "").trim();
+  const p = (document.getElementById("password")?.value || "");
+  const err = document.getElementById("loginError");
+  if (err) err.textContent = "";
+
+  if (!u || !p){
+    if (err) err.textContent = "Enter username and password.";
+    return;
+  }
+
+  // If Supabase is configured, use real backend auth.
+  if (supabase){
+    (async () => {
+      try{
+        // Sign in with derived email (so UI can stay 'Username')
+        const email = toEmail(u);
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password: p });
+        if (error) throw error;
+
+        teardownMap();
+
+        // Decide role (simple rule: username match ADMIN_USER => admin)
+        if (u === ADMIN_USER){
+          sessionStorage.setItem("role","admin");
+          sessionStorage.setItem("admin_authed","1");
+          sessionStorage.setItem("admin_email", email);
+          showOnly("admin");
+          refreshAdmin();
+        }else{
+          sessionStorage.setItem("role","user");
+          sessionStorage.setItem("user",u);
+          showOnly("splash");
+          // preload remote user_data into REMOTE_DATA (falls back to local if missing)
+          await loadRemoteData();
+          showOnly("home");
+          updateEverything();
+        }
+        updateLoginButton();
+      }catch(e){
+        console.warn(e);
+        if (err) err.textContent = "Login failed. Check username/password (or create the user in Supabase).";
+      }
+    })();
+    return;
+  }
+
+  // Fallback (no backend configured): old local demo users
+  if (u === ADMIN_USER && p === ADMIN_PASS){
+    teardownMap();
+    sessionStorage.setItem("role","admin");
+    sessionStorage.setItem("admin_authed","1");
+    sessionStorage.setItem("admin_email","local-admin");
+    showOnly("admin");
+    refreshAdmin();
+    updateLoginButton();
+    return;
+  }
+
+  const data = getData();
+  if (data[u] && data[u].pass === p){
+    teardownMap();
+    sessionStorage.setItem("role","user");
+    sessionStorage.setItem("user",u);
+    showOnly("splash");
+    showOnly("home");
+    updateEverything();
+    updateLoginButton();
+    return;
+  }
+
+  if (err) err.textContent = "Invalid username or password.";
+}
+
+/* HELP */
+function openHelp(){ document.getElementById("helpOverlay").style.display = "flex"; }
+function closeHelp(){ document.getElementById("helpOverlay").style.display = "none"; }
+
+/* Back to top */
+function backToTop(){ window.scrollTo({ top: 0, behavior: "smooth" }); }
+
+/* =========================
+   ADMIN
+========================= */
+let adminFilter = "all";
+function setAdminFilter(f){
+  adminFilter = f;
+  document.getElementById("chipAll").classList.toggle("active", f==="all");
+  document.getElementById("chipNone").classList.toggle("active", f==="none");
+  document.getElementById("chipProg").classList.toggle("active", f==="prog");
+  document.getElementById("chipDone").classList.toggle("active", f==="done");
+  refreshAdmin();
+}
+
+function statusForKm(km){
+  if (km >= CHALLENGE_KM) return { txt:"🟢 Finished", cls:"statusDone", key:"done" };
+  if (km > 0)            return { txt:"🟡 In progress", cls:"statusProg", key:"prog" };
+  return { txt:"🔴 Not started", cls:"statusNone", key:"none" };
+}
+function lastUpdateISO(userObj){
+  const lu = userObj.last_update;
+  if (lu) return lu;
+  const h = Array.isArray(userObj.history) ? userObj.history : [];
+  const e = Array.isArray(userObj.emails) ? userObj.emails : [];
+  const a = h.length ? h.at(-1).atISO : null;
+  const b = e.length ? e.at(-1).atISO : null;
+  if (!a && !b) return null;
+  if (a && !b) return a;
+  if (!a && b) return b;
+  return (a > b) ? a : b;
+}
+function renderAdminSummary(data){
+  const users = Object.keys(data).filter(u => !(data[u]?.is_demo));
+  let started = 0, finished = 0, totalKm = 0;
+  let lastIso = null;
+
+  for (const u of users){
+    const km = Number(data[u].km || 0);
+    totalKm += km;
+    if (km > 0) started++;
+    if (km >= CHALLENGE_KM) finished++;
+    const lu = lastUpdateISO(data[u]);
+    if (lu && (!lastIso || lu > lastIso)) lastIso = lu;
+  }
+
+  const box = document.getElementById("adminSummary");
+  box.innerHTML = `
+    <span class="pill">Users: <b>${users.length}</b></span>
+    <span class="pill">Started: <b>${started}</b></span>
+    <span class="pill">Finished: <b>${finished}</b></span>
+    <span class="pill">Total km: <b>${totalKm.toFixed(2)}</b></span>
+    <span class="pill">Last update: <b>${lastIso ? timeAgo(lastIso) : "—"}</b></span>
+  `;
+}
+function refreshAdmin(){
+  const data = getData();
+  renderAdminSummary(data);
+
+  const q = (document.getElementById("adminSearch")?.value || "").trim().toLowerCase();
+
+  const keys = Object.keys(data)
+    .filter(u => !(data[u]?.is_demo))
+    .filter(u => !q || u.toLowerCase().includes(q))
+    .filter(u => {
+      const km = Number(data[u].km || 0);
+      const st = statusForKm(km).key;
+      if (adminFilter === "all") return true;
+      return st === adminFilter;
+    })
+    .sort((a,b)=>{
+      const la = lastUpdateISO(data[a]) || "";
+      const lb = lastUpdateISO(data[b]) || "";
+      if (lb !== la) return lb.localeCompare(la);
+      return String(a).localeCompare(String(b));
+    });
+
+  const wrap = document.getElementById("adminCards");
+  wrap.innerHTML = "";
+
+  keys.forEach(u=>{
+    const obj = data[u];
+    const km = Number(obj.km || 0);
+    const st = statusForKm(km);
+    const pct = Math.max(0, Math.min(100, (km/CHALLENGE_KM)*100));
+    const updatedIso = lastUpdateISO(obj);
+    const updatedAgo = updatedIso ? timeAgo(updatedIso) : "—";
+
+    const hist = Array.isArray(obj.history) ? obj.history : [];
+    const emails = Array.isArray(obj.emails) ? obj.emails : [];
+    const lastLog = hist.length ? `${hist.at(-1).atLocal} — +${Number(hist.at(-1).km).toFixed(2)} km` : "—";
+    const lastEmail = emails.length ? emails.at(-1).atLocal : "—";
+
+    const card = document.createElement("div");
+    card.className = "adminCard";
+    card.innerHTML = `
+      <div class="adminCardTop">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="adminUser">${escapeHtml(u)}</div>
+            <span class="statusPill ${st.cls}">${st.txt}</span>
+          </div>
+          <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <span class="pill">Updated: <b>${escapeHtml(updatedAgo)}</b></span>
+            <span class="pill">Emails: <b>${emails.length}</b></span>
+          </div>
+        </div>
+        <div class="adminKm">${km.toFixed(2)} km</div>
+      </div>
+
+      <div class="miniBar"><div class="miniFill" style="width:${pct.toFixed(1)}%"></div></div>
+
+      <div class="adminMeta">
+        <div><b>Last log:</b> ${escapeHtml(lastLog)}</div>
+        <div><b>Last email:</b> ${escapeHtml(lastEmail)}</div>
+      </div>
+
+      <div class="adminActions">
+        <button class="ghostBtn" onclick="showDetails('${jsSafe(u)}')">Details</button>
+        <button class="ghostBtn" onclick="showPw('${jsSafe(u)}')">Show password</button>
+        <button class="ghostBtn" onclick="toggleMore('${jsSafe(u)}')">More</button>
+      </div>
+
+      <div class="moreMenu" id="more_${escapeHtml(u)}">
+        <button class="ghostBtn" style="background:var(--danger);" onclick="adminResetUser('${jsSafe(u)}')">Reset to 0</button>
+        <button class="ghostBtn" onclick="adminClearHistory('${jsSafe(u)}')">Clear logs</button>
+        <button class="ghostBtn" onclick="adminClearEmails('${jsSafe(u)}')">Clear emails</button>
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+
+  if (!keys.length){
+    wrap.innerHTML = `<div style="opacity:.75;font-size:13px;">No users match that filter/search.</div>`;
+  }
+}
+function toggleMore(user){
+  const el = document.getElementById("more_" + user);
+  if (!el) return;
+  el.classList.toggle("show");
+}
+function adminResetUser(user){
+  if (!confirm(`Reset ${user} back to 0 and clear logs?`)) return;
+  const data = getData();
+  if (!data[user]) return;
+  data[user].km = 0;
+  data[user].history = [];
+  data[user].finish_at = null;
+  data[user].last_update = new Date().toISOString();
+  saveData(data);
+  refreshAdmin();
+}
+function adminClearHistory(user){
+  if (!confirm(`Clear logs for ${user}? (km stays the same)`)) return;
+  const data = getData();
+  if (!data[user]) return;
+  data[user].history = [];
+  data[user].last_update = new Date().toISOString();
+  saveData(data);
+  refreshAdmin();
+}
+function adminClearEmails(user){
+  if (!confirm(`Clear emails for ${user}?`)) return;
+  const data = getData();
+  if (!data[user]) return;
+  data[user].emails = [];
+  data[user].last_update = new Date().toISOString();
+  saveData(data);
+  refreshAdmin();
+}
+
+/* Export summary (clipboard) */
+async function exportSummary(){
+  const data = getData();
+  const users = Object.keys(data).filter(u => !(data[u].is_demo === true)).sort((a,b)=>a.localeCompare(b));
+  const lines = [];
+  lines.push("Rattler Run 5K — Summary");
+  lines.push("username\tkm\tstatus\tlast update");
+  for (const u of users){
+    const km = Number(data[u].km||0);
+    const st = statusForKm(km).txt.replace(/🟢 |🟡 |🔴 /g,"");
+    const lu = lastUpdateISO(data[u]);
+    lines.push(`${u}\t${km.toFixed(2)}\t${st}\t${lu ? displayTime(lu) : "—"}`);
+  }
+  const text = lines.join("\n");
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast("Export copied to clipboard ✅", 1400);
+  }catch(e){
+    alert("Copy failed — your browser blocked clipboard.");
+  }
+}
+
+/* Reset ALL overlay */
+function openResetAll(){
+  document.getElementById("resetAllInput").value = "";
+  document.getElementById("resetAllOverlay").style.display = "flex";
+}
+function closeResetAll(){
+  document.getElementById("resetAllOverlay").style.display = "none";
+}
+function confirmResetAll(){
+  const v = (document.getElementById("resetAllInput").value || "").trim();
+  if (v !== "RESET"){
+    alert("You must type RESET exactly.");
+    return;
+  }
+  const data = getData();
+  for (const u of Object.keys(data)){
+    if (data[u]?.is_demo) continue;
+    data[u].km = 0;
+    data[u].history = [];
+    data[u].emails = [];
+    data[u].finish_at = null;
+    data[u].last_update = new Date().toISOString();
+  }
+  saveData(data);
+  closeResetAll();
+  refreshAdmin();
+  showToast("All users reset ✅", 1400);
+}
+
+/* Admin: password popup */
+function showPw(user){
+  const data = getData();
+  const pass = data?.[user]?.pass || USERS[user] || "(not found)";
+  document.getElementById("pwUser").textContent = user;
+  document.getElementById("pwPass").textContent = pass;
+  document.getElementById("pwOverlay").style.display = "flex";
+}
+function closePw(){ document.getElementById("pwOverlay").style.display = "none"; }
+async function copyPw(){
+  const u = document.getElementById("pwUser").textContent;
+  const p = document.getElementById("pwPass").textContent;
+  const text = `Username: ${u}\nPassword: ${p}`;
+  try { await navigator.clipboard.writeText(text); alert("Copied!"); }
+  catch(e){ alert("Copy failed — copy manually."); }
+}
+
+/* Admin: details popup */
+function showDetails(user){
+  const data = getData();
+  const obj = data[user];
+  if (!obj) return;
+
+  document.getElementById("detailsUser").textContent = user;
+  document.getElementById("detailsTotal").textContent = Number(obj.km||0).toFixed(2);
+  document.getElementById("detailsUpdated").textContent = displayTime(lastUpdateISO(obj));
+
+  const logsBox = document.getElementById("detailsLogs");
+  const emailsBox = document.getElementById("detailsEmails");
+
+  const hist = Array.isArray(obj.history) ? obj.history.slice().reverse() : [];
+  const emails = Array.isArray(obj.emails) ? obj.emails.slice().reverse() : [];
+
+  logsBox.textContent = hist.length
+    ? hist.map(x => `${x.atLocal}  |  +${Number(x.km).toFixed(2)} km`).join("\n")
+    : "No logs.";
+
+  emailsBox.textContent = emails.length
+    ? emails.map(x => `${x.atLocal}`).join("\n")
+    : "No emails.";
+
+  document.getElementById("detailsOverlay").style.display = "flex";
+}
+function closeDetails(){ document.getElementById("detailsOverlay").style.display = "none"; }
+async function copyDetails(){
+  const user = document.getElementById("detailsUser").textContent;
+  const total = document.getElementById("detailsTotal").textContent;
+  const updated = document.getElementById("detailsUpdated").textContent;
+  const logs = document.getElementById("detailsLogs").textContent;
+  const emails = document.getElementById("detailsEmails").textContent;
+
+  const text =
+`Rattler Run 5K — Details
+User: ${user}
+Total: ${total} km
+Updated: ${updated}
+
+Logs:
+${logs}
+
+Emails:
+${emails}`;
+
+  try { await navigator.clipboard.writeText(text); alert("Copied!"); }
+  catch(e){ alert("Copy failed — copy manually."); }
+}
+
+/* =========================
+   MAP + ROUTE + PROGRESS
+========================= */
+
+/* Snake route in blank region */
+const START = [24.65, 12.65];
+
+function haversineMeters(a, b){
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const lat1 = toRad(a[0]), lat2 = toRad(b[0]);
+  const dLat = toRad(b[0]-a[0]);
+  const dLng = toRad(b[1]-a[1]);
+  const s1 = Math.sin(dLat/2), s2 = Math.sin(dLng/2);
+  const x = s1*s1 + Math.cos(lat1)*Math.cos(lat2)*s2*s2;
+  return 2*R*Math.asin(Math.min(1, Math.sqrt(x)));
+}
+function totalRouteMeters(route){
+  let m = 0;
+  for (let i=1;i<route.length;i++) m += haversineMeters(route[i-1], route[i]);
+  return m;
+}
+function generateSnakeRouteBase(){
+  const route = [];
+  const baseLat = START[0];
+  const baseLng = START[1];
+
+  const BODY_POINTS = 240;
+  const WAVE_AMPL = 0.22;
+  const WAVE_FREQ = 6.4;
+  const BODY_LENGTH_LNG = 2.55;
+
+  for (let i = 0; i <= BODY_POINTS; i++){
+    const t = i / BODY_POINTS;
+    const lng = baseLng + t * BODY_LENGTH_LNG;
+    const lat = baseLat + Math.sin(t * Math.PI * 2 * WAVE_FREQ) * WAVE_AMPL;
+    route.push([lat, lng]);
+  }
+
+  const head = route[route.length - 1];
+  const headLat = head[0];
+  const headLng = head[1];
+
+  const headLoops = 34;
+  const headRadiusLat = 0.14;
+  const headRadiusLng = 0.20;
+
+  for (let k = 0; k <= headLoops; k++){
+    const a = (k / headLoops) * Math.PI * 1.9;
+    const rScale = 1 - (k / (headLoops * 1.35));
+    route.push([
+      headLat + Math.sin(a) * headRadiusLat * rScale,
+      headLng + Math.cos(a) * headRadiusLng * rScale
+    ]);
+  }
+  route.push([headLat + 0.05, headLng + 0.08]);
+  return route;
+}
+function scaleRouteToMeters(route, targetMeters){
+  const current = totalRouteMeters(route);
+  if (!current || current < 1) return route;
+  const scale = targetMeters / current;
+  return route.map(pt => {
+    const dLat = pt[0] - START[0];
+    const dLng = pt[1] - START[1];
+    return [START[0] + dLat * scale, START[1] + dLng * scale];
+  });
+}
+const ROUTE = scaleRouteToMeters(generateSnakeRouteBase(), TARGET_ROUTE_METERS);
+
+/* MAP STATE */
+let map, redLine, greenLine, progressDot;
+let distCum = [], totalMeters = 0;
+let popped = new Set();
+let lastLoggedDistance = null;
+
+/* Map lock state */
+let mapLocked = true;
+
+/* Clean teardown so switching pages is safe */
+function teardownMap(){
+  try{
+    if (map){
+      map.off();
+      map.remove();
+    }
+  }catch(e){}
+  map = null;
+  redLine = null;
+  greenLine = null;
+  progressDot = null;
+  distCum = [];
+  totalMeters = 0;
+  popped = new Set();
+  lastLoggedDistance = null;
+  mapLocked = true;
+}
+
+/* Map lock/unlock */
+function applyMapLockState(){
+  if (!map) return;
+  const mapEl = document.getElementById("map");
+
+  if (mapLocked){
+    map.scrollWheelZoom.disable();
+    map.dragging.disable();
+    map.touchZoom.disable();
+    map.doubleClickZoom.disable();
+    map.boxZoom.disable();
+    map.keyboard.disable();
+    if (map.tap) map.tap.disable();
+
+    document.getElementById("mapLockBtn").textContent = "Unlock map";
+    mapEl.classList.add("map-locked");
+    mapEl.classList.remove("map-unlocked");
+  } else {
+    map.scrollWheelZoom.enable();
+    map.dragging.enable();
+    map.touchZoom.enable();
+    map.doubleClickZoom.enable();
+    map.boxZoom.enable();
+    map.keyboard.enable();
+    if (map.tap) map.tap.enable();
+
+    document.getElementById("mapLockBtn").textContent = "Lock map";
+    mapEl.classList.remove("map-locked");
+    mapEl.classList.add("map-unlocked");
+  }
+}
+function toggleMapLock(){
+  mapLocked = !mapLocked;
+  applyMapLockState();
+  showToast(mapLocked ? "Map locked 🔒 (scroll page normally)" : "Map unlocked 🗺️ (move/zoom)", 1200);
+}
+
+/* START RUN */
+function startRun(){
+  const u = getUser() || "";
+  showOnly("run");
+
+  document.getElementById("helloName").textContent = `Hello ${u}`;
+  document.getElementById("whoRun").textContent = u;
+
+  const isDemo = (u === "Demo" && getData().Demo?.is_demo === true);
+  document.getElementById("exitDemoBtnRun").style.display = isDemo ? "inline-flex" : "none";
+
+  teardownMap();
+  map = L.map("map", { zoomControl: true }).setView(START, 9);
+
+  // Locked by default (better scrolling)
+  mapLocked = true;
+  applyMapLockState();
+
+  const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png", {
+    maxZoom: 19, subdomains: "abcd",
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+  }).addTo(map);
+
+  const loadingEl = document.getElementById("mapLoading");
+  let hideDone = false;
+  function hideLoading(){
+    if (hideDone) return;
+    hideDone = true;
+    loadingEl.style.display = "none";
+  }
+  tiles.once("load", hideLoading);
+  setTimeout(hideLoading, 3500);
+
+  redLine = L.polyline(ROUTE, { color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(), weight:4, opacity:0.90 }).addTo(map);
+  greenLine = L.polyline([], { color: getComputedStyle(document.documentElement).getPropertyValue('--green').trim(), weight:6, opacity:0.95 }).addTo(map);
+
+  // Subtle pulsing progress dot (small + NO SCALE)
+  progressDot = L.circleMarker(ROUTE[0], {
+    radius: 4,
+    weight: 2,
+    color: getComputedStyle(document.documentElement).getPropertyValue('--green').trim(),
+    fillColor: getComputedStyle(document.documentElement).getPropertyValue('--green').trim(),
+    fillOpacity: 0.9,
+    className: "pulse-dot"
+  }).addTo(map);
+
+  fitRoute();
+
+  distCum = [0];
+  totalMeters = 0;
+  for (let i=1;i<ROUTE.length;i++){
+    totalMeters += map.distance(ROUTE[i-1], ROUTE[i]);
+    distCum.push(totalMeters);
+  }
+
+  const data = getData();
+  const saved = Math.min((data[u]?.km || 0), CHALLENGE_KM);
+  setProgressUI(saved);
+  setProgressInstant(saved);
+  updateLastUpdateLabel();
+
+  if (saved >= CHALLENGE_KM){
+    if (!data[u].finish_at) {
+      data[u].finish_at = new Date().toISOString();
+      data[u].last_update = data[u].finish_at;
+      saveData(data);
+      updateLastUpdateLabel();
+    }
+    showFinish();
+  }
+}
+
+/* Map controls */
+function recenter(){
+  if (!map) return;
+  map.setView(START, 9, { animate:true });
+}
+function fitRoute(){
+  if (!map || !redLine) return;
+  map.fitBounds(redLine.getBounds(), { padding:[26,26] });
+}
+
+/* PROGRESS helpers */
+function metersForLoggedKm(loggedKm){
+  const clamped = Math.max(0, Math.min(CHALLENGE_KM, loggedKm));
+  return (clamped / CHALLENGE_KM) * totalMeters;
+}
+function pointAtMeters(m){
+  if (m <= 0) return { pt: ROUTE[0], idx: 0 };
+  if (m >= totalMeters) return { pt: ROUTE[ROUTE.length-1], idx: ROUTE.length-2 };
+
+  let i=0;
+  while (i < distCum.length-1 && distCum[i+1] < m) i++;
+
+  const A = ROUTE[i], B = ROUTE[i+1];
+  const t = (m - distCum[i]) / (distCum[i+1] - distCum[i]);
+  return { pt: [A[0] + (B[0]-A[0])*t, A[1] + (B[1]-A[1])*t], idx: i };
+}
+function polyUpToMeters(m){
+  const { pt, idx } = pointAtMeters(m);
+  const base = ROUTE.slice(0, idx+1);
+  base.push(pt);
+  return base;
+}
+function setProgressInstant(loggedKm){
+  if (!map || !greenLine || !progressDot) return;
+  const m = metersForLoggedKm(loggedKm);
+  const { pt } = pointAtMeters(m);
+  greenLine.setLatLngs(polyUpToMeters(m));
+  progressDot.setLatLng(pt);
+}
+function animateProgress(fromLoggedKm, toLoggedKm){
+  const fromM = metersForLoggedKm(fromLoggedKm);
+  const toM   = metersForLoggedKm(toLoggedKm);
+
+  const frames = 170;
+  let f = 0;
+
+  function step(){
+    f++;
+    const t = Math.min(1, f/frames);
+    const m = fromM + (toM - fromM) * t;
+
+    const { pt } = pointAtMeters(m);
+    greenLine.setLatLngs(polyUpToMeters(m));
+    progressDot.setLatLng(pt);
+
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* CONFIRM POPUP */
+function confirmAddKm(km){
+  return confirm(`You are adding +${Number(km).toFixed(2)} km.\n\nPress OK to confirm.`);
+}
+
+/* LOG */
+function requestLog(km){
+  km = Number(km);
+  if (!km || km <= 0) return;
+  if (!confirmAddKm(km)) return;
+  doLog(km);
+}
+function parseKmInput(raw){
+  if (raw == null) return NaN;
+  const s = String(raw).trim().replace(",", ".");
+  if (!s) return NaN;
+  return Number(s);
+}
+function requestLogFromInput(){
+  const v = parseKmInput(document.getElementById("input").value);
+  if (!v || v <= 0) return;
+  requestLog(v);
+}
+
+/* UNDO */
+function undoLast(){
+  const u = getUser();
+  const data = getData();
+  if (!data[u]) return;
+
+  const hist = Array.isArray(data[u].history) ? data[u].history : [];
+  if (!hist.length){
+    showToast("Nothing to undo.", 1200);
+    updateUndoButtonState();
+    return;
+  }
+
+  const last = hist.at(-1);
+  const lastKm = Number(last.km || 0);
+
+  if (!confirm(`Undo last log (${lastKm.toFixed(2)} km)?`)) return;
+
+  const before = Math.min(Number(data[u].km || 0), CHALLENGE_KM);
+  const after  = clamp(before - lastKm, 0, CHALLENGE_KM);
+
+  hist.pop();
+  data[u].history = hist;
+  data[u].km = after;
+
+  if (after < CHALLENGE_KM) data[u].finish_at = null;
+
+  data[u].last_update = new Date().toISOString();
+  saveData(data);
+
+  lastLoggedDistance = null;
+
+  setProgressUI(after);
+  setProgressInstant(after);
+  updateLastUpdateLabel();
+
+  popped = new Set();
+  closeFinish();
+
+  showToast(`Undone (-${lastKm.toFixed(2)} km)`, 1200);
+  updateUndoButtonState();
+}
+
+/* LOG */
+function doLog(addKm){
+  const data = getData();
+  const u = getUser();
+  if (!data[u]) return alert("User not found.");
+
+  const before = Math.min(Number(data[u].km || 0), CHALLENGE_KM);
+  const after  = Math.min(before + addKm, CHALLENGE_KM);
+
+  data[u].km = after;
+
+  data[u].history = Array.isArray(data[u].history) ? data[u].history : [];
+  const nowISO = new Date().toISOString();
+  const nowLocal = new Date().toLocaleString();
+  data[u].history.push({ atISO: nowISO, atLocal: nowLocal, km: addKm });
+
+  data[u].last_update = nowISO;
+
+  if (after >= CHALLENGE_KM && !data[u].finish_at){
+    data[u].finish_at = nowISO;
+  }
+
+  saveData(data);
+  lastLoggedDistance = addKm;
+
+  setProgressUI(after);
+  animateProgress(before, after);
+
+  flashSaved();
+  updateLastUpdateLabel();
+
+  showToast(`Added +${addKm.toFixed(2)} km`, 1100);
+
+  document.getElementById("input").value = "";
+  updateUndoButtonState();
+
+  for (let k = Math.floor(before)+1; k <= Math.floor(after); k++){
+    if (k < 1 || k > CHALLENGE_KM) continue;
+    if (popped.has(k)) continue;
+    popped.add(k);
+
+    setTimeout(() => {
+      const m = metersForLoggedKm(k);
+      const { pt } = pointAtMeters(m);
+      L.popup({ closeButton:true, autoClose:true })
+        .setLatLng(pt)
+        .setContent(refs[k-1])
+        .openOn(map);
+    }, POPUP_DELAY_MS);
+  }
+
+  if (after >= CHALLENGE_KM){
+    setTimeout(()=>showFinish(), 450);
+  }
+}
+
+/* EMAIL */
+function recordEmailAttempt(user){
+  const data = getData();
+  if (!data[user]) return;
+  data[user].emails = Array.isArray(data[user].emails) ? data[user].emails : [];
+  const nowISO = new Date().toISOString();
+  const nowLocal = new Date().toLocaleString();
+  data[user].emails.push({ atISO: nowISO, atLocal: nowLocal });
+  data[user].last_update = nowISO;
+  saveData(data);
+  updateLastUpdateLabel();
+}
+function emailToWRW(){
+  const u = getUser() || "unknown";
+  const logged = (typeof lastLoggedDistance === "number") ? Number(lastLoggedDistance).toFixed(2) : "N/A";
+
+  const subject = `Rattler Run 5K - ${u}`;
+  const body = [
+    `User: ${u}`,
+    `Distance logged: ${logged} km`,
+    "",
+    "Please attach screenshots and/or proof to this email before sending."
+  ].join("\n");
+
+  recordEmailAttempt(u);
+
+  const mailto =
+    `mailto:${encodeURIComponent(WRW_EMAIL)}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(body)}`;
+
+  // This will switch apps; when you return, we force Leaflet to redraw (see visibility/focus handlers).
+  window.location.href = mailto;
+}
+
+/* FINISH */
+function showFinish(){
+  const u = getUser() || "You";
+  const data = getData();
+  const obj = data[u] || {};
+  const total = Math.min(Number(obj.km || 0), CHALLENGE_KM).toFixed(2);
+  const whenISO = obj.finish_at || new Date().toISOString();
+  const whenNice = (function(){
+    try { return new Date(whenISO).toLocaleString(); } catch(e){ return "—"; }
+  })();
+
+  document.getElementById("finishUser").textContent = u;
+  document.getElementById("finishTotal").textContent = total;
+  document.getElementById("finishWhen").textContent = whenNice;
+
+  document.getElementById("finishOverlay").style.display = "flex";
+}
+function closeFinish(){ document.getElementById("finishOverlay").style.display = "none"; }
+
+/* ===== Map comes back after leaving to email ===== */
+function refreshMapAfterReturn(){
+  if (!map) return;
+  try{
+    map.invalidateSize(true);
+    // keep it tidy: if user comes back and it looks blank, fit once
+    if (redLine) map.fitBounds(redLine.getBounds(), { padding:[26,26] });
+  }catch(e){}
+}
+document.addEventListener("visibilitychange", ()=>{
+  if (document.visibilityState === "visible"){
+    setTimeout(refreshMapAfterReturn, 120);
+    setTimeout(refreshMapAfterReturn, 420);
+  }
+});
+window.addEventListener("focus", ()=>{
+  setTimeout(refreshMapAfterReturn, 120);
+});
+window.addEventListener("pageshow", ()=>{
+  setTimeout(refreshMapAfterReturn, 120);
+});
+
+/* Splash -> Run */
+showOnly("auth");
+</script>
+</body>
+</html>
