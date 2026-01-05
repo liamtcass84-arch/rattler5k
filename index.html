@@ -603,7 +603,54 @@
 
     loginBtn.addEventListener("click", async (e) => {
       e.preventDefault();
-      alert("✅ Login button clicked");
+      <script>
+  const SUPABASE_URL = "https://dzkslsjyitlfpsjapunv.supabase.co";
+  const SUPABASE_ANON_KEY = "PASTE_YOUR_sb_publishable_KEY_HERE";
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const loginBtn = document.getElementById("loginBtn");
+    const userEl = document.getElementById("username");
+    const passEl = document.getElementById("password");
+
+    if (!loginBtn || !userEl || !passEl) {
+      alert("❌ Missing username/password/loginBtn IDs");
+      return;
+    }
+
+    loginBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const username = userEl.value.trim();
+      const password = passEl.value;
+
+      if (!username || !password) {
+        alert("Enter username + password");
+        return;
+      }
+
+      // username can be email OR we turn it into an email behind the scenes
+      const email = username.includes("@") ? username : `${username}@rattlerrun.local`;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert("❌ Login failed: " + error.message);
+        return;
+      }
+
+      alert("✅ Logged in as: " + (data.user?.email || email));
+
+      // OPTIONAL: hide login box + show app section if you have them
+      const authSection = document.getElementById("auth");
+      const appSection = document.getElementById("app");
+      if (authSection) authSection.style.display = "none";
+      if (appSection) appSection.style.display = "block";
+    });
+  });
+</script>
+
     });
   });
 </script>
